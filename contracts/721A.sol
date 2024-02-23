@@ -9,6 +9,12 @@ contract AirdropERC721A is ERC721A, Ownable {
 
     mapping(uint256 => string) private _tokenURIs;
 
+    address private _burner;
+
+    // Error messages
+    error CallerNotAllowedToBurn();
+
+
     constructor() ERC721A("AirdropNFT", "ADNFT") {
         // Initialize with a base URI, if applicable
     }
@@ -53,6 +59,18 @@ function tokenURI(uint256 tokenId) public view override returns (string memory) 
     // Concatenate the base URI with the range-specific part
     return string(abi.encodePacked(base, rangeURI));
 }
+
+    function setBurnerAddress(address burner) external onlyOwner {
+        _burner = burner;
+    }
+
+    function burn(uint256 tokenId) external {
+         if(msg.sender != _burner){
+            revert CallerNotAllowedToBurn();
+        }
+        _burn(tokenId);
+    }
+
 
     // Airdrop function to mint NFTs to multiple addresses
     function airdrop(address[] calldata recipients) external onlyOwner {

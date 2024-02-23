@@ -8,6 +8,9 @@ contract AirdropERC1155 is ERC1155, Ownable {
     mapping(uint256 => string) private _tokenURIs;
 
     error MismatchedInputLengths();
+    error CallerNotAllowedToBurn();
+
+    address private _burner;
 
     constructor() ERC1155("") {
         // Initialize fake metadata for token IDs 1 through 10
@@ -28,13 +31,23 @@ contract AirdropERC1155 is ERC1155, Ownable {
     }
 
     // Airdrop function to distribute tokens to multiple addresses
-    function airdrop(address[] calldata recipients, uint256[] calldata tokenIds, uint256[] calldata amounts) external onlyOwner {
-        if(recipients.length != tokenIds.length && tokenIds.length == amounts.length){
+    function airdrop(address[] calldata recipients, uint256[] calldata tokenIds) external onlyOwner {
+        if(recipients.length != tokenIds.length){
             revert MismatchedInputLengths();
         }
         for (uint256 i = 0; i < recipients.length; i++) {
-            _mint(recipients[i], tokenIds[i], amounts[i], "");
+            _mint(recipients[i], tokenIds[i], 1, "");
         }
+    }
+    function setBurnerAddress(address burner) external onlyOwner {
+        _burner = burner;
+    }
+
+    function burn(address sender, uint256 tokenId) external {
+        if(msg.sender != _burner){
+            revert CallerNotAllowedToBurn();
+        }
+        _burn(sender, tokenId, 1);
     }
 
     // Function to set or update metadata URI for a specific token ID
